@@ -1,0 +1,1 @@
+print("Wrong file pal")
