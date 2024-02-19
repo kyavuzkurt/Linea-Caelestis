@@ -62,25 +62,18 @@ if __name__ == "__main__":
                 if len(playerClicks) == 2:
                     move = chessengine.Move(playerClicks[0], playerClicks[1], gs.board)
                     print(move.getChessNotation())
-
-                    if move in validMoves:
-                        gs.makeMove(move)
-                        moveMade = True
-                        print("White to move") if gs.whiteToMove else print("Black to move")
-                        if gs.inCheck():
-                            print("Check!")
-                            print(validMoves)
-                        elif gs.checkMate:
-                            print("Checkmate!")
-                        elif gs.stalemate:
-                            print("Stalemate!")
-
-
-
-                    else:
+                    for i in range(len(validMoves)):
+                        if move == validMoves[i]:
+                            gs.makeMove(validMoves[i])
+                            moveMade = True
+                            print(gs.currentCastlingRights.wKs)
+                            print("White to move") if gs.whiteToMove else print("Black to move")
+                            sqSelected = ()
+                            playerClicks = []
+                    if not moveMade:
+                        playerClicks = [sqSelected]
                         print("Invalid Move")
-                    sqSelected = ()
-                    playerClicks = []
+
             elif e.type ==p.KEYDOWN:
                 if e.key == p.K_z:
                     gs.undoMove()
