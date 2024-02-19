@@ -17,3 +17,6 @@ I made this project thanks to chessprogramming.org and the guides of Eddie Shari
 Opening polyglots of Flavio Martin, Titans were used.
 syzygy endgame tables were used.
 
+How to Open:
+-Run chessgame.py on python.
+-Press z to undo moves.
