@@ -1,4 +1,4 @@
-This project is made to be used by my another project. My final goal is to make an open sourced robotic arm model, MeArm, to play chess with RasperryPi controller. 
+This project is being made to be used by my another project. My final goal is to make an open sourced robotic arm model, MeArm, to play chess with RasperryPi controller. 
 
 
 
