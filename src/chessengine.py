@@ -80,6 +80,77 @@ class ChessBoard:
             self.checkMate = False
             self.stalemate = False
 
+    def inCheckFunction(self):
+        if self.whiteToMove:
+            return self.squareUnderAttack(self.whiteKingLocation[0], self.whiteKingLocation[1])
+        else:
+            return self.squareUnderAttack(self.blackKingLocation[0], self.blackKingLocation[1])
+
+    def squareUnderAttack(self, r, c):
+        self.whiteToMove = not self.whiteToMove
+        opponentMoves = self.getAllPossibleMoves()
+        self.whiteToMove = not self.whiteToMove
+        for move in opponentMoves:
+            if move.rowEnd == r and move.colEnd == c:
+                return True
+        return False
+
+    def checkForPinsAndChecks(self):
+        pins = []
+        checks = []
+        inCheck = False
+        if self.whiteToMove:
+            enemyColor = "b"
+            allyColor = "w"
+            rowStart = self.whiteKingLocation[0]
+            colStart = self.whiteKingLocation[1]
+        else:
+            enemyColor = "w"
+            allyColor = "b"
+            rowStart = self.blackKingLocation[0]
+            colStart = self.blackKingLocation[1]
+        directions = ((-1, 0), (0, -1), (1, 0), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1))
+        for j in range(len(directions)):
+            direction = directions[j]
+            possiblePins = ()
+            for i in range(1, 8):
+                rowEnd = rowStart + direction[0] * i
+                colEnd = colStart + direction[1] * i
+                if 0 <= rowEnd <= 7 and 0 <= colEnd <= 7:
+                    endPiece = self.board[rowEnd][colEnd]
+                    if endPiece[0] == allyColor and endPiece[1] != "K":
+                        if possiblePins == ():
+                            possiblePins = (rowEnd, colEnd, direction[0], direction[1])
+                        else:
+                            break
+                    elif endPiece[0] == enemyColor:
+                        enemyType = endPiece[1]
+                        if (0 <= j <= 3 and enemyType == "R") or (4 <= j <= 7 and enemyType == "B") or (
+                                i == 1 and enemyType == "P" and (
+                                (enemyColor == "w" and 6 <= j <= 7) or (enemyColor == "b" and 4 <= j <= 5))) or (
+                                enemyType == "Q") or (i == 1 and enemyType == "K"):
+                            if possiblePins == ():
+                                inCheck = True
+                                checks.append((rowEnd, colEnd, direction[0], direction[1]))
+                                break
+                            else:
+                                pins.append(possiblePins)
+                                break
+                    else:  # no checks
+                        break
+                else:  # off board
+                    break
+        knightMoves = ((-2, -1), (-2, 1), (-1, 2), (1, 2), (2, -1), (2, 1), (-1, -2), (1, -2))
+        for move in knightMoves:
+            rowEnd = rowStart + move[0]
+            colEnd = colStart + move[1]
+            if 0 <= rowEnd <= 7 and 0 <= colEnd <= 7:
+                endPiece = self.board[rowEnd][colEnd]
+                if endPiece[0] == enemyColor and endPiece[1] == "N":
+                    inCheck = True
+                    checks.append((rowEnd, colEnd, move[0], move[1]))
+        return inCheck, pins, checks
+
     def updateCastlingRights(self, move):
         if move.pieceCaptured == "wR":
             if move.colEnd == 0:
@@ -223,6 +294,7 @@ class ChessBoard:
             if self.pins[i][0] == r and self.pins[i][1] == c:
                 piecePinned = True
                 self.pins.remove(self.pins[i])
+                break
 
         squares = ((2, -1), (2, 1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2))
         allyColor = "w" if self.whiteToMove else "b"
@@ -307,6 +379,8 @@ class ChessBoard:
             if not self.squareUnderAttack(row, col -1) and not self.squareUnderAttack(row, col - 2):
                 moves.append(Move((row, col),(row, col - 2), self.board, isCastling = True))
 
+
+
     def getValidMoves(self):
         tempCastlingRights = CastleRights(self.currentCastlingRights.wKs, self.currentCastlingRights.bKs,
                                           self.currentCastlingRights.wQs, self.currentCastlingRights.bQs)
@@ -348,7 +422,7 @@ class ChessBoard:
             else:
                 self.getCastleMoves(self.blackKingLocation[0], self.blackKingLocation[1], moves)
         if len(moves) == 0:
-            if self.inCheck:
+            if self.inCheckFunction():
                 self.checkMate = True
             else:
                 self.stalemate = True
@@ -359,72 +433,6 @@ class ChessBoard:
         return moves
 
 
-    def inCheck(self):
-        if self.whiteToMove:
-            return self.squareUnderAttack(self.whiteKingLocation[0], self.whiteKingLocation[1])
-        else:
-            return self.squareUnderAttack(self.blackKingLocation[0], self.blackKingLocation[1])
-
-    def squareUnderAttack(self, r, c):
-        self.whiteToMove = not self.whiteToMove
-        opponentMoves = self.getAllPossibleMoves()
-        self.whiteToMove = not self.whiteToMove
-        for move in opponentMoves:
-            if move.rowEnd == r and move.colEnd == c:
-                return True
-        return False
-    def checkForPinsAndChecks(self):
-        pins = []
-        checks = []
-        inCheck = False
-        if self.whiteToMove:
-            enemyColor = "b"
-            allyColor = "w"
-            rowStart = self.whiteKingLocation[0]
-            colStart = self.whiteKingLocation[1]
-        else:
-            enemyColor = "w"
-            allyColor = "b"
-            rowStart = self.blackKingLocation[0]
-            colStart = self.blackKingLocation[1]
-        directions = ((-1, 0), (0, -1), (1, 0), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1))
-        for j in range(len(directions)):
-            direction = directions[j]
-            possiblePins = ()
-            for i in range (1,8):
-                rowEnd = rowStart + direction[0] * i
-                colEnd = colStart + direction[1] * i
-                if 0 <= rowEnd <= 7 and 0 <= colEnd <= 7:
-                    endPiece = self.board[rowEnd][colEnd]
-                    if endPiece[0] == allyColor and endPiece[1] != "K":
-                        if possiblePins == ():
-                            possiblePins = (rowEnd, colEnd, direction[0], direction[1])
-                        else:
-                            break
-                    elif endPiece[0] == enemyColor:
-                        enemyType = endPiece[1]
-                        if (0 <= j <= 3 and enemyType == "R") or (4 <= j <= 7 and enemyType == "B") or (i == 1 and enemyType == "P"  and ((enemyColor == "w" and 6 <= j <= 7) or (enemyColor == "b" and 4 <= j <= 5))) or (enemyType == "Q") or (i == 1 and enemyType == "K"):
-                            if possiblePins == ():
-                                inCheck = True
-                                checks.append((rowEnd, colEnd, direction[0], direction[1]))
-                                break
-                            else:
-                                pins.append(possiblePins)
-                                break
-                    else: #no checks
-                        break
-                else: # off board
-                    break
-        knightMoves = ((-2, -1), (-2, 1), (-1, 2), (1, 2), (2, -1), (2, 1), (-1, -2), (1, -2))
-        for move in knightMoves:
-            rowEnd = rowStart + move[0]
-            colEnd = colStart + move[1]
-            if 0 <= rowEnd <= 7 and 0 <= colEnd <= 7:
-                endPiece = self.board[rowEnd][colEnd]
-                if endPiece[0] == enemyColor and endPiece[1] == "N":
-                    inCheck = True
-                    checks.append((rowEnd, colEnd, move[0], move[1]))
-        return inCheck, pins, checks
 
 
 
