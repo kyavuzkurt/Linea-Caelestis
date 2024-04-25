@@ -1,5 +1,7 @@
 import pygame as p
-from src import chessengine, searchAndEvaluation
+import chessengine, searchAndEvaluation
+import sys
+from multiprocessing import Process, Queue
 WIDTH = HEIGHT = 512
 DIMENSION = 8
 SQ_SIZE = HEIGHT // DIMENSION
@@ -56,14 +58,15 @@ if __name__ == "__main__":
     clock = p.time.Clock()
     loadImages()
     gs = chessengine.ChessBoard()
-    #print(gs.board)
     validMoves = gs.getValidMoves()
     whitePlayer = True
-    blackPlayer = True
+    blackPlayer = False
     moveMade = False
     gameOver = False
     animate = False
     running = True
+    engineThinking = False
+    moveFinderProcess = None
     sqSelected = ()
     playerClicks = []
     while running:
@@ -90,6 +93,7 @@ if __name__ == "__main__":
                                 gs.makeMove(validMoves[i])
                                 moveMade = True
                                 print("White to move") if gs.whiteToMove else print("Black to move")
+
                                 sqSelected = ()
                                 playerClicks = []
                         if not moveMade:
@@ -101,6 +105,8 @@ if __name__ == "__main__":
                     gs.undoMove()
                     moveMade = True
                     print("Move undone")
+                    if engineThinking:
+                        moveFinderProcess.terminate()
                 if e.key == p.K_r:
                     gs = chessengine.ChessBoard()
                     validMoves = gs.getValidMoves()
@@ -108,19 +114,29 @@ if __name__ == "__main__":
                     playerClicks = []
                     moveMade = False
                     gameOver = False
+                    if engineThinking:
+                        moveFinderProcess.terminate()
+                        engineThinking = False
 
 
         if not gameOver and not humanTurn:
-            engineMove = searchAndEvaluation.randomMove(validMoves)
-            gs.makeMove(engineMove)
-            moveMade = True
+            if not engineThinking:
+                engineThinking = True
+                returnQueue = Queue()
+                moveFinderProcess = Process(target=searchAndEvaluation, args=(gs, validMoves, returnQueue))
+                moveFinderProcess.start()
+            if not moveFinderProcess.is_alive():
+                engineMove = returnQueue.get()
+                if engineMove is None:
+                    engineMove = searchAndEvaluation.randomMove(validMoves)
+                gs.makeMove(engineMove)
+                moveMade = True
+                engineThinking = False
 
         if moveMade:
             validMoves = gs.getValidMoves()
             moveMade = False
         drawGameState(screen,gs, validMoves, sqSelected)
-        if gs.inCheck:
-            drawText(screen, 'Check')
         if gs.checkMate:
             gameOver = True
             if gs.whiteToMove:
