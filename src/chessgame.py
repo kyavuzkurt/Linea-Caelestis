@@ -1,6 +1,5 @@
 import pygame as p
 import chessengine, searchAndEvaluation
-import sys
 from multiprocessing import Process, Queue
 WIDTH = HEIGHT = 512
 DIMENSION = 8
@@ -59,8 +58,8 @@ if __name__ == "__main__":
     loadImages()
     gs = chessengine.ChessBoard()
     validMoves = gs.getValidMoves()
-    whitePlayer = False
-    blackPlayer = False
+    whitePlayer = False #Change to true if you want to play as white
+    blackPlayer = False #Change to true if you want to play as black
     moveMade = False
     gameOver = False
     animate = False
