@@ -59,7 +59,7 @@ if __name__ == "__main__":
     loadImages()
     gs = chessengine.ChessBoard()
     validMoves = gs.getValidMoves()
-    whitePlayer = True
+    whitePlayer = False
     blackPlayer = False
     moveMade = False
     gameOver = False
@@ -123,7 +123,7 @@ if __name__ == "__main__":
             if not engineThinking:
                 engineThinking = True
                 returnQueue = Queue()
-                moveFinderProcess = Process(target=searchAndEvaluation, args=(gs, validMoves, returnQueue))
+                moveFinderProcess = Process(target=searchAndEvaluation.bestMove, args=(gs, validMoves, returnQueue))
                 moveFinderProcess.start()
             if not moveFinderProcess.is_alive():
                 engineMove = returnQueue.get()

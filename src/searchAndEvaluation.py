@@ -92,7 +92,7 @@ def findMoveNegaMaxAlphaBeta(gs, validMoves, depth, alpha, beta, turnMultiplier)
 
 def scoreBoard(gs):
     if gs.checkMate:
-        if gs.white_to_move:
+        if gs.whiteToMove:
             return -CHECKMATE  # black wins
         else:
             return CHECKMATE  # white wins
@@ -111,3 +111,4 @@ def scoreBoard(gs):
                 if piece[0] == "b":
                     score -= pieceScores[piece[1]] + piecePositionScore
 
+    return score
