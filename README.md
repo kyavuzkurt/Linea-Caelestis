@@ -7,7 +7,7 @@ To Do:
 - Adding 50 move and 3 move repeat rules
 - Promoting to other pieces rather than only promoting to Queen
 - Lichess.com bot account
-- Castling is bugged, trying to fix it.
+- Sometimes checkmate algorithm doesn't work properly. Trying to figure out the cause and eliminate it.
 
 
 I made this project thanks to chessprogramming.org and the guides of Eddie Sharick on youtube. His channel is: https://www.youtube.com/channel/UCaEohRz5bPHywGBwmR18Qww
