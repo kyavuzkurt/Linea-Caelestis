@@ -57,7 +57,7 @@ piecePositionScores = {"wN": knightScores,
                          "bP": pawnScores[::-1]}
 CHECKMATE = 1000
 DRAW = 0
-DEPTH = 2 #Change the depth parameter. Max 5 is recommended.
+DEPTH = 3 #Change the depth parameter. Max 5 is recommended.
 def randomMove(validMoves):
     return validMoves[random.randint(0, len(validMoves)-1)]
 

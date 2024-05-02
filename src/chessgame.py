@@ -87,6 +87,7 @@ if __name__ == "__main__":
                     if len(playerClicks) == 2:
                         move = chessengine.Move(playerClicks[0], playerClicks[1], gs.board)
                         print(move.getChessNotation())
+                        gs.readableMoveLog.append(move.getChessNotation())
                         for i in range(len(validMoves)):
                             if move == validMoves[i]:
                                 gs.makeMove(validMoves[i])
@@ -138,6 +139,7 @@ if __name__ == "__main__":
         drawGameState(screen,gs, validMoves, sqSelected)
         if gs.checkMate:
             gameOver = True
+            print(gs.readableMoveLog) #for debug comment out when using
             if gs.whiteToMove:
                 drawText(screen, 'Black wins by checkmate')
             else:
@@ -147,6 +149,7 @@ if __name__ == "__main__":
             drawText(screen, 'Draw')
         clock.tick(MAX_FPS)
         p.display.flip()
+
 
 
 

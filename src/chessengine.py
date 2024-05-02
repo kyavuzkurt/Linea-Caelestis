@@ -22,6 +22,8 @@ class ChessBoard:
         self.currentCastlingRightsLog = [CastleRights(self.currentCastlingRights.wKs, self.currentCastlingRights.bKs,
                                                         self.currentCastlingRights.wQs, self.currentCastlingRights.bQs)]
         self.moveLog = []
+        self.readableMoveLog = []
+
 
     def makeMove(self, move):
         self.board[move.rowStart][move.colStart] = "--"
@@ -37,7 +39,7 @@ class ChessBoard:
         if move.isEnpassantMove:
             self.board[move.rowStart][move.colEnd] = "--"
         if move.pieceMoved[1] == 'P' and abs(move.rowStart - move.rowEnd) == 2:
-            self.enpassantSquares = ((move.rowStart + move.rowEnd)//2, move.colStart)
+            self.enpassantSquares = ((move.rowStart + move.rowEnd) // 2, move.colStart)
         else:
             self.enpassantSquares = ()
         if move.isCastling:
@@ -64,8 +66,7 @@ class ChessBoard:
                 self.blackKingLocation = (move.rowStart, move.colStart)
             if move.isEnpassantMove:
                 self.board[move.rowEnd][move.colEnd] = "--"
-                self.board[move.rowStart][move.colStart] = move.pieceCaptured
-                self.enpassantSquares = (move.rowEnd, move.colEnd)
+                self.board[move.rowStart][move.colEnd] = move.pieceCaptured
             self.enpassantSquaresLog.pop()
             self.enpassantSquares = self.enpassantSquaresLog[-1]
             if move.isCastling:
@@ -81,7 +82,12 @@ class ChessBoard:
     def getValidMoves(self):
         tempCastlingRights = CastleRights(self.currentCastlingRights.wKs, self.currentCastlingRights.bKs,
                                           self.currentCastlingRights.wQs, self.currentCastlingRights.bQs)
+        tempEnPassantSquares = self.enpassantSquares
         moves = self.getAllPossibleMoves()
+        if self.whiteToMove:
+            self.getCastleMoves(self.whiteKingLocation[0], self.whiteKingLocation[1], moves)
+        else:
+            self.getCastleMoves(self.blackKingLocation[0], self.blackKingLocation[1], moves)
         for i in range(len(moves)-1, -1, -1):
             self.makeMove(moves[i])
             self.whiteToMove = not self.whiteToMove
@@ -90,11 +96,15 @@ class ChessBoard:
             self.whiteToMove = not self.whiteToMove
             self.undoMove()
         self.currentCastlingRights = tempCastlingRights
+        self.enpassantSquares = tempEnPassantSquares
+
         if len(moves) == 0:
             if self.inCheckFunction():
                 self.checkMate = True
             else:
                 self.stalemate = True
+
+
         return moves
 
     def inCheckFunction(self):
@@ -145,65 +155,30 @@ class ChessBoard:
     def getPawnMoves(self, r, c, moves):
         if self.whiteToMove:
             moveDirection = -1
+            doublePush = -2
+            enPassantChecker = 2
             startRow = 6
             enemyColor = "b"
-            kingRow, kingCol = self.whiteKingLocation
         else:
             moveDirection = 1
+            doublePush = 2
+            enPassantChecker = 5
             startRow = 1
             enemyColor = "w"
-            kingRow, kingCol = self.blackKingLocation
         if self.board[r + moveDirection][c] == "--":
             moves.append(Move((r, c), (r + moveDirection, c), self.board))
-            if r == startRow and self.board[r + 2 * moveDirection][c] == "--":
-                moves.append(Move((r, c), (r + 2 * moveDirection, c), self.board))
+            if r == startRow and self.board[r + doublePush][c] == "--":
+                moves.append(Move((r, c), (r + doublePush , c), self.board))
         if c - 1 >= 0:
-
             if self.board[r + moveDirection][c - 1][0] == enemyColor:
                 moves.append(Move((r,c),(r + moveDirection, c-1), self.board))
-            if (r + moveDirection, c -1) == self.enpassantSquares: #leftside en passant
-                attackingPiece = blockingPiece = False
-                if kingRow == r:
-                    if kingCol < c:
-                        insideRange = range(kingCol + 1, c - 1)
-                        outsideRange = range(c + 1, 8)
-                    else:
-                        insideRange = range(kingCol - 1, c, -1)
-                        outsideRange = range(c - 2, -1 ,-1)
-                    for i in insideRange:
-                        if self.board[r][i] != "--":
-                            blockingPiece = True
-                    for i in outsideRange:
-                        square = self.board[r][i]
-                        if square[0] == enemyColor and (square[1] == "R" or square[1] == "Q"):
-                            attackingPiece = True
-                        elif square != "--":
-                            blockingPiece = True
-                if not attackingPiece or blockingPiece:
-                    moves.append(Move((r,c), (r + moveDirection, c - 1), self.board, isEnpassantMove=True))
+            if (r + moveDirection, c -1) == self.enpassantSquares and r + moveDirection == enPassantChecker: #leftside en passant
+                moves.append(Move((r,c), (r + moveDirection, c - 1), self.board, isEnpassantMove=True))
         if c + 1 <= 7:
             if self.board[r + moveDirection][c + 1][0] == enemyColor:
                 moves.append(Move((r,c),(r + moveDirection, c + 1), self.board))
-            if (r + moveDirection, c + 1) == self.enpassantSquares:
-                attackingPiece = blockingPiece = False
-                if kingRow == r:
-                    if kingCol < c:
-                        insideRange = range(kingCol + 1, c)
-                        outsideRange = range(c + 2, 8)
-                    else:
-                        insideRange = range(kingCol + 1, c)
-                        outsideRange = range(c -1, -1, -1)
-                    for i in insideRange:
-                        if self.board[r][i] != "--":
-                            blockingPiece = True
-                    for i in outsideRange:
-                        square = self.board[r][i]
-                        if square[0] == enemyColor and (square[1] == "R" or square[1] == "Q"):
-                            attackingPiece = True
-                        elif square != "--":
-                            blockingPiece = True
-                if not attackingPiece or blockingPiece:
-                    moves.append(Move((r,c), (r + moveDirection, c + 1), self.board, isEnpassantMove=True))
+            if (r + moveDirection, c + 1) == self.enpassantSquares and r + moveDirection == enPassantChecker:
+                moves.append(Move((r,c), (r + moveDirection, c + 1), self.board, isEnpassantMove=True))
 
 
 
@@ -235,7 +210,6 @@ class ChessBoard:
             endRow = r + m[0]
             endCol = c + m[1]
             if 0 <= endRow < 8 and 0 <= endCol < 8:
-
                 endPiece = self.board[endRow][endCol]
                 if endPiece[0] != allyColor:
                     moves.append(Move((r, c), (endRow, endCol), self.board))
@@ -279,6 +253,8 @@ class ChessBoard:
                         self.whiteKingLocation = (r, c)
                     else:
                         self.blackKingLocation = (r, c)
+
+
 
 
 
