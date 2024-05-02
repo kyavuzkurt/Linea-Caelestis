@@ -7,7 +7,9 @@ To Do:
 - Adding 50 move and 3 move repeat rules
 - Promoting to other pieces rather than only promoting to Queen
 - Lichess.com bot account
-- Sometimes checkmate algorithm doesn't work properly. Trying to figure out the cause and eliminate it.
+- Early Game/Mid Game/End Game evaluation tables
+- Overall better evaluation system
+- More pruning on search algorithm
 
 
 I made this project thanks to chessprogramming.org and the guides of Eddie Sharick on youtube. His channel is: https://www.youtube.com/channel/UCaEohRz5bPHywGBwmR18Qww
