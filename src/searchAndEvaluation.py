@@ -57,7 +57,7 @@ piecePositionScores = {"wN": knightScores,
                          "bP": pawnScores[::-1]}
 CHECKMATE = 1000
 DRAW = 0
-DEPTH = 3 #Change the depth parameter. Max 5 is recommended.
+DEPTH = 2 #Change the depth parameter. Max 5 is recommended.
 def randomMove(validMoves):
     return validMoves[random.randint(0, len(validMoves)-1)]
 
@@ -65,11 +65,37 @@ def bestMove(gs, validMoves, returnQueue):
     global nextMove
     nextMove = None
     random.shuffle(validMoves)
-    findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE,
-                             1 if gs.whiteToMove else -1)
+    PVS(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
     returnQueue.put(nextMove)
 
-def findMoveNegaMaxAlphaBeta(gs, validMoves, depth, alpha, beta, turnMultiplier):
+def PVS(gs, validMoves, depth, alpha, beta, turnMultiplier):
+    global nextMove
+
+    if depth == 0:
+        return turnMultiplier * scoreBoard(gs)
+    # Principal Variation Search (PVS)
+    first = True
+    for move in validMoves:
+        gs.makeMove(move)
+        nextMoves = gs.getValidMoves()
+
+        if first:
+            score = -PVS(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
+            first = False
+        else:
+            score = -PVS(gs, nextMoves, depth - 1, -alpha - 1, -alpha, -turnMultiplier)
+            if alpha < score < beta:
+                score = -PVS(gs, nextMoves, depth - 1, -beta, -score, -turnMultiplier)
+
+        if score > alpha:
+            alpha = score
+            if depth == DEPTH:
+                nextMove = move
+        gs.undoMove()
+        if alpha >= beta:
+            break
+    return alpha
+def findMoveNegaMaxAlphaBeta(gs, validMoves, depth, alpha, beta, turnMultiplier): #obsolete
     global nextMove
 
     if depth == 0:
@@ -89,6 +115,26 @@ def findMoveNegaMaxAlphaBeta(gs, validMoves, depth, alpha, beta, turnMultiplier)
         if alpha >= beta:
             break
     return maxScore
+
+
+
+def quiescenceSearch(gs, tacticalMoves, alpha, beta): #TODO
+    standPat = scoreBoard(gs)
+    if standPat > beta:
+        return beta
+    if alpha < standPat:
+        alpha = standPat
+    if len(tacticalMoves) == 0:
+        return alpha
+    for move in tacticalMoves:
+        gs.makeMove(move)
+        score = -quiescenceSearch(gs, tacticalMoves, -beta, -alpha)
+        gs.undoMove()
+        if score >= beta:
+            return beta
+        if score > alpha:
+            alpha = score
+    return alpha
 
 def scoreBoard(gs):
     if gs.checkMate:

@@ -15,7 +15,6 @@ class ChessBoard:
         self.blackKingLocation = (0, 4)
         self.checkMate = False
         self.stalemate = False
-
         self.enpassantSquares = ()
         self.enpassantSquaresLog = [self.enpassantSquares]
         self.currentCastlingRights = CastleRights(True, True, True, True)
@@ -97,7 +96,6 @@ class ChessBoard:
             self.undoMove()
         self.currentCastlingRights = tempCastlingRights
         self.enpassantSquares = tempEnPassantSquares
-
         if len(moves) == 0:
             if self.inCheckFunction():
                 self.checkMate = True
@@ -191,7 +189,7 @@ class ChessBoard:
             for i in range(1, 8):
                 endRow = r + d[0] * i
                 endCol = c + d[1] * i
-                if 0 <= endRow <= 7 and 0 <= endCol <= 7:
+                if 0 <= endRow < 8 and 0 <= endCol < 8:
                     endPiece = self.board[endRow][endCol]
                     if endPiece == "--":
                         moves.append(Move((r, c), (endRow, endCol), self.board))
@@ -204,7 +202,7 @@ class ChessBoard:
                     break
 
     def getKnightMoves(self, r, c, moves):
-        squares = ((-2, -1), (-2, 1), (-1, 2), (1, 2), (2, -1), (2, 1), (-1, -2), (1, -2))
+        squares = ((-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1))
         allyColor = "w" if self.whiteToMove else "b"
         for m in squares:
             endRow = r + m[0]
@@ -244,15 +242,7 @@ class ChessBoard:
             if 0 <= endRow < 8 and 0 <= endCol < 8:
                 endPiece = self.board[endRow][endCol]
                 if endPiece[0] != allyColor:
-                    if allyColor == "w":
-                        self.whiteKingLocation = (endRow, endCol)
-                    else:
-                        self.blackKingLocation = (endRow, endCol)
                     moves.append(Move((r, c), (endRow, endCol), self.board))
-                    if allyColor == "w":
-                        self.whiteKingLocation = (r, c)
-                    else:
-                        self.blackKingLocation = (r, c)
 
 
 
@@ -325,6 +315,9 @@ class Move():
         self.rowEnd = sqEnd[0]
         self.pieceMoved = board[self.rowStart][self.colStart]
         self.pieceCaptured = board[self.rowEnd][self.colEnd]
+        if self.pieceCaptured == "--":
+            self.isCapture = True
+
         self.isPawnPromotion = False
         if (self.pieceMoved == 'wP' and self.rowEnd == 0) or (self.pieceMoved == 'bP' and self.rowEnd == 7):
             self.isPawnPromotion = True
