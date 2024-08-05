@@ -1,125 +1,191 @@
 import random
-pieceScores = {"K": 0, "Q":9, "R":5, "B":3, "N":3, "P":1}
-knightScores = [[0.0, 0.1, 0.2, 0.2, 0.2, 0.2, 0.1, 0.0],
-                [0.1, 0.3, 0.5, 0.5, 0.5, 0.5, 0.3, 0.1],
-                [0.2, 0.5, 0.6, 0.65, 0.65, 0.6, 0.5, 0.2],
-                [0.2, 0.55, 0.65, 0.7, 0.7, 0.65, 0.55, 0.2],
-                [0.2, 0.5, 0.65, 0.7, 0.7, 0.65, 0.5, 0.2],
-                [0.2, 0.55, 0.6, 0.65, 0.65, 0.6, 0.55, 0.2],
-                [0.1, 0.3, 0.5, 0.55, 0.55, 0.5, 0.3, 0.1],
-                [0.0, 0.1, 0.2, 0.2, 0.2, 0.2, 0.1, 0.0]]
+import chess
+import chess.engine
 
-bishopScores = [[0.0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.0],
-                [0.2, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.2],
-                [0.2, 0.4, 0.5, 0.6, 0.6, 0.5, 0.4, 0.2],
-                [0.2, 0.5, 0.5, 0.6, 0.6, 0.5, 0.5, 0.2],
-                [0.2, 0.4, 0.6, 0.6, 0.6, 0.6, 0.4, 0.2],
-                [0.2, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.2],
-                [0.2, 0.5, 0.4, 0.4, 0.4, 0.4, 0.5, 0.2],
-                [0.0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.0]]
+pieceScores = {"K": 0, "Q": 9, "R": 5, "B": 3, "N": 3, "P": 1}
+earlyGamePiecePositionScores = {
+    "N": [[0.0, 0.1, 0.2, 0.2, 0.2, 0.2, 0.1, 0.0],
+          [0.1, 0.3, 0.5, 0.5, 0.5, 0.5, 0.3, 0.1],
+          [0.2, 0.5, 0.6, 0.65, 0.65, 0.6, 0.5, 0.2],
+          [0.2, 0.55, 0.65, 0.7, 0.7, 0.65, 0.55, 0.2],
+          [0.2, 0.5, 0.65, 0.7, 0.7, 0.65, 0.5, 0.2],
+          [0.2, 0.55, 0.6, 0.65, 0.65, 0.6, 0.55, 0.2],
+          [0.1, 0.3, 0.5, 0.55, 0.55, 0.5, 0.3, 0.1],
+          [0.0, 0.1, 0.2, 0.2, 0.2, 0.2, 0.1, 0.0]],
+    "B": [[0.0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.0],
+          [0.2, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.2],
+          [0.2, 0.4, 0.5, 0.6, 0.6, 0.5, 0.4, 0.2],
+          [0.2, 0.5, 0.5, 0.6, 0.6, 0.5, 0.5, 0.2],
+          [0.2, 0.4, 0.6, 0.6, 0.6, 0.6, 0.4, 0.2],
+          [0.2, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.2],
+          [0.2, 0.5, 0.4, 0.4, 0.4, 0.4, 0.5, 0.2],
+          [0.0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.0]],
+    "Q": [[0.0, 0.2, 0.2, 0.3, 0.3, 0.2, 0.2, 0.0],
+          [0.2, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.2],
+          [0.2, 0.4, 0.5, 0.5, 0.5, 0.5, 0.4, 0.2],
+          [0.3, 0.4, 0.5, 0.5, 0.5, 0.5, 0.4, 0.3],
+          [0.4, 0.4, 0.5, 0.5, 0.5, 0.5, 0.4, 0.3],
+          [0.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0.4, 0.2],
+          [0.2, 0.4, 0.5, 0.4, 0.4, 0.4, 0.4, 0.2],
+          [0.0, 0.2, 0.2, 0.3, 0.3, 0.2, 0.2, 0.0]],
+    "R": [[0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25],
+          [0.5, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.5],
+          [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
+          [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
+          [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
+          [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
+          [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
+          [0.25, 0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.25]],
+    "P": [[0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8],
+          [0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7],
+          [0.3, 0.3, 0.4, 0.5, 0.5, 0.4, 0.3, 0.3],
+          [0.25, 0.25, 0.3, 0.45, 0.45, 0.3, 0.25, 0.25],
+          [0.2, 0.2, 0.2, 0.4, 0.4, 0.2, 0.2, 0.2],
+          [0.25, 0.15, 0.1, 0.2, 0.2, 0.1, 0.15, 0.25],
+          [0.25, 0.3, 0.3, 0.0, 0.0, 0.3, 0.3, 0.25],
+          [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2]]
+}
 
-rookScores = [[0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25],
-              [0.5, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.5],
-              [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
-              [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
-              [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
-              [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
-              [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
-              [0.25, 0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.25]]
 
-queenScores = [[0.0, 0.2, 0.2, 0.3, 0.3, 0.2, 0.2, 0.0],
-               [0.2, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.2],
-               [0.2, 0.4, 0.5, 0.5, 0.5, 0.5, 0.4, 0.2],
-               [0.3, 0.4, 0.5, 0.5, 0.5, 0.5, 0.4, 0.3],
-               [0.4, 0.4, 0.5, 0.5, 0.5, 0.5, 0.4, 0.3],
-               [0.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0.4, 0.2],
-               [0.2, 0.4, 0.5, 0.4, 0.4, 0.4, 0.4, 0.2],
-               [0.0, 0.2, 0.2, 0.3, 0.3, 0.2, 0.2, 0.0]]
+midGamePiecePositionScores = {
+    "N": [[-0.5, -0.4, -0.3, -0.3, -0.3, -0.3, -0.4, -0.5],
+          [-0.4, -0.2, 0.0, 0.0, 0.0, 0.0, -0.2, -0.4],
+          [-0.3, 0.0, 0.1, 0.15, 0.15, 0.1, 0.0, -0.3],
+          [-0.3, 0.05, 0.15, 0.2, 0.2, 0.15, 0.05, -0.3],
+          [-0.3, 0.0, 0.15, 0.2, 0.2, 0.15, 0.0, -0.3],
+          [-0.3, 0.05, 0.1, 0.15, 0.15, 0.1, 0.05, -0.3],
+          [-0.4, -0.2, 0.0, 0.05, 0.05, 0.0, -0.2, -0.4],
+          [-0.5, -0.4, -0.3, -0.3, -0.3, -0.3, -0.4, -0.5]],
+    "B": [[-0.2, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.2],
+          [-0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.1],
+          [-0.1, 0.0, 0.05, 0.1, 0.1, 0.05, 0.0, -0.1],
+          [-0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.05, -0.1],
+          [-0.1, 0.0, 0.1, 0.1, 0.1, 0.1, 0.0, -0.1],
+          [-0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, -0.1],
+          [-0.1, 0.05, 0.0, 0.0, 0.0, 0.0, 0.05, -0.1],
+          [-0.2, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.2]],
+    "Q": [[-0.2, -0.1, -0.1, -0.05, -0.05, -0.1, -0.1, -0.2],
+          [-0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.1],
+          [-0.1, 0.0, 0.05, 0.05, 0.05, 0.05, 0.0, -0.1],
+          [-0.05, 0.0, 0.05, 0.05, 0.05, 0.05, 0.0, -0.05],
+          [0.0, 0.0, 0.05, 0.05, 0.05, 0.05, 0.0, -0.05],
+          [-0.1, 0.05, 0.05, 0.05, 0.05, 0.05, 0.0, -0.1],
+          [-0.1, 0.0, 0.05, 0.0, 0.0, 0.0, 0.0, -0.1],
+          [-0.2, -0.1, -0.1, -0.05, -0.05, -0.1, -0.1, -0.2]],
+    "R": [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.05, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.05],
+          [-0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.05],
+          [-0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.05],
+          [-0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.05],
+          [-0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.05],
+          [-0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.05],
+          [0.0, 0.0, 0.0, 0.05, 0.05, 0.0, 0.0, 0.0]],
+    "P": [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05],
+          [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15],
+          [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+          [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25],
+          [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+          [0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35]]
+}
 
-pawnScores = [[0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8],
-              [0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7],
-              [0.3, 0.3, 0.4, 0.5, 0.5, 0.4, 0.3, 0.3],
-              [0.25, 0.25, 0.3, 0.45, 0.45, 0.3, 0.25, 0.25],
-              [0.2, 0.2, 0.2, 0.4, 0.4, 0.2, 0.2, 0.2],
-              [0.25, 0.15, 0.1, 0.2, 0.2, 0.1, 0.15, 0.25],
-              [0.25, 0.3, 0.3, 0.0, 0.0, 0.3, 0.3, 0.25],
-              [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2]]
+endGamePiecePositionScores = {
+    "N": [[-0.5, -0.4, -0.3, -0.3, -0.3, -0.3, -0.4, -0.5],
+          [-0.4, -0.2, 0.0, 0.0, 0.0, 0.0, -0.2, -0.4],
+          [-0.3, 0.0, 0.1, 0.15, 0.15, 0.1, 0.0, -0.3],
+          [-0.3, 0.05, 0.15, 0.2, 0.2, 0.15, 0.05, -0.3],
+          [-0.3, 0.0, 0.15, 0.2, 0.2, 0.15, 0.0, -0.3],
+          [-0.3, 0.05, 0.1, 0.15, 0.15, 0.1, 0.05, -0.3],
+          [-0.4, -0.2, 0.0, 0.05, 0.05, 0.0, -0.2, -0.4],
+          [-0.5, -0.4, -0.3, -0.3, -0.3, -0.3, -0.4, -0.5]],
+    "B": [[-0.2, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.2],
+          [-0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.1],
+          [-0.1, 0.0, 0.05, 0.1, 0.1, 0.05, 0.0, -0.1],
+          [-0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.05, -0.1],
+          [-0.1, 0.0, 0.1, 0.1, 0.1, 0.1, 0.0, -0.1],
+          [-0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, -0.1],
+          [-0.1, 0.05, 0.0, 0.0, 0.0, 0.0, 0.05, -0.1],
+          [-0.2, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.2]],
+    "Q": [[-0.2, -0.1, -0.1, -0.05, -0.05, -0.1, -0.1, -0.2],
+          [-0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.1],
+          [-0.1, 0.0, 0.05, 0.05, 0.05, 0.05, 0.0, -0.1],
+          [-0.05, 0.0, 0.05, 0.05, 0.05, 0.05, 0.0, -0.05],
+          [0.0, 0.0, 0.05, 0.05, 0.05, 0.05, 0.0, -0.05],
+          [-0.1, 0.05, 0.05, 0.05, 0.05, 0.05, 0.0, -0.1],
+          [-0.1, 0.0, 0.05, 0.0, 0.0, 0.0, 0.0, -0.1],
+          [-0.2, -0.1, -0.1, -0.05, -0.05, -0.1, -0.1, -0.2]],
+    "R": [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.05, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.05],
+          [-0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.05],
+          [-0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.05],
+          [-0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.05],
+          [-0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.05],
+          [-0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.05],
+          [0.0, 0.0, 0.0, 0.05, 0.05, 0.0, 0.0, 0.0]],
+    "P": [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05],
+          [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15],
+          [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+          [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25],
+          [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+          [0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35]]
+}
 
-piecePositionScores = {"wN": knightScores,
-                         "bN": knightScores[::-1],
-                         "wB": bishopScores,
-                         "bB": bishopScores[::-1],
-                         "wQ": queenScores,
-                         "bQ": queenScores[::-1],
-                         "wR": rookScores,
-                         "bR": rookScores[::-1],
-                         "wP": pawnScores,
-                         "bP": pawnScores[::-1]}
 CHECKMATE = 1000
 DRAW = 0
-DEPTH = 2 #Change the depth parameter. Max 5 is recommended.
-def randomMove(validMoves):
-    return validMoves[random.randint(0, len(validMoves)-1)]
+DEPTH = 3  # Change the depth parameter. Max 5 is recommended.
 
-def bestMove(gs, validMoves, returnQueue):
+def getGamePhase(board):
+    totalPieces = len(board.piece_map())
+    if totalPieces > 24:
+        return "early"
+    elif totalPieces > 12:
+        return "mid"
+    else:
+        return "end"
+    
+def randomMove(validMoves):
+    return random.choice(validMoves)
+
+def bestMove(board, validMoves, returnQueue):
     global nextMove
     nextMove = None
     random.shuffle(validMoves)
-    PVS(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+    PVS(board, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if board.turn else -1)
     returnQueue.put(nextMove)
 
-def PVS(gs, validMoves, depth, alpha, beta, turnMultiplier):
+def PVS(board, validMoves, depth, alpha, beta, turnMultiplier):
     global nextMove
 
     if depth == 0:
-        return turnMultiplier * scoreBoard(gs)
+        return turnMultiplier * scoreBoard(board)
     # Principal Variation Search (PVS)
     first = True
     for move in validMoves:
-        gs.makeMove(move)
-        nextMoves = gs.getValidMoves()
+        board.push(move)
+        nextMoves = list(board.legal_moves)
 
         if first:
-            score = -PVS(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
+            score = -PVS(board, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
             first = False
         else:
-            score = -PVS(gs, nextMoves, depth - 1, -alpha - 1, -alpha, -turnMultiplier)
+            score = -PVS(board, nextMoves, depth - 1, -alpha - 1, -alpha, -turnMultiplier)
             if alpha < score < beta:
-                score = -PVS(gs, nextMoves, depth - 1, -beta, -score, -turnMultiplier)
+                score = -PVS(board, nextMoves, depth - 1, -beta, -score, -turnMultiplier)
 
         if score > alpha:
             alpha = score
             if depth == DEPTH:
                 nextMove = move
-        gs.undoMove()
+        board.pop()
         if alpha >= beta:
             break
     return alpha
-def findMoveNegaMaxAlphaBeta(gs, validMoves, depth, alpha, beta, turnMultiplier): #obsolete
-    global nextMove
 
-    if depth == 0:
-        return turnMultiplier * scoreBoard(gs)
-    maxScore = -CHECKMATE
-    for move in validMoves:
-        gs.makeMove(move)
-        nextMoves = gs.getValidMoves()
-        score = -findMoveNegaMaxAlphaBeta(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
-        if score > maxScore:
-            maxScore = score
-            if depth == DEPTH:
-                nextMove = move
-        gs.undoMove()
-        if maxScore > alpha:
-            alpha = maxScore
-        if alpha >= beta:
-            break
-    return maxScore
-
-
-
-def quiescenceSearch(gs, tacticalMoves, alpha, beta): #TODO
-    standPat = scoreBoard(gs)
+def quiescenceSearch(board, tacticalMoves, alpha, beta):
+    standPat = scoreBoard(board)
     if standPat > beta:
         return beta
     if alpha < standPat:
@@ -127,34 +193,43 @@ def quiescenceSearch(gs, tacticalMoves, alpha, beta): #TODO
     if len(tacticalMoves) == 0:
         return alpha
     for move in tacticalMoves:
-        gs.makeMove(move)
-        score = -quiescenceSearch(gs, tacticalMoves, -beta, -alpha)
-        gs.undoMove()
+        board.push(move)
+        score = -quiescenceSearch(board, tacticalMoves, -beta, -alpha)
+        board.pop()
         if score >= beta:
             return beta
         if score > alpha:
             alpha = score
     return alpha
 
-def scoreBoard(gs):
-    if gs.checkMate:
-        if gs.whiteToMove:
+def scoreBoard(board):
+    if board.is_checkmate():
+        if board.turn:
             return -CHECKMATE  # black wins
         else:
             return CHECKMATE  # white wins
-    elif gs.stalemate:
+    elif board.is_stalemate():
         return DRAW
-    score = 0
-    for row in range(len(gs.board)):
-        for col in range(len(gs.board[row])):
-            piece = gs.board[row][col]
-            if piece != "--":
-                piecePositionScore = 0
-                if piece[1] != "K":
-                    piecePositionScore = piecePositionScores[piece][row][col]
-                if piece[0] == "w":
-                    score += pieceScores[piece[1]] + piecePositionScore
-                if piece[0] == "b":
-                    score -= pieceScores[piece[1]] + piecePositionScore
 
+    gamePhase = getGamePhase(board)
+    if gamePhase == "early":
+        piecePositionScores = earlyGamePiecePositionScores
+    elif gamePhase == "mid":
+        piecePositionScores = midGamePiecePositionScores
+    else:
+        piecePositionScores = endGamePiecePositionScores
+
+    score = 0
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece:
+            pieceType = piece.piece_type
+            pieceColor = piece.color
+            piecePositionScore = 0
+            if pieceType != chess.KING:
+                piecePositionScore = piecePositionScores[chess.PIECE_SYMBOLS[pieceType].upper()][chess.square_rank(square)][chess.square_file(square)]
+            if pieceColor == chess.WHITE:
+                score += pieceScores[chess.PIECE_SYMBOLS[pieceType].upper()] + piecePositionScore
+            else:
+                score -= pieceScores[chess.PIECE_SYMBOLS[pieceType].upper()] + piecePositionScore
     return score
