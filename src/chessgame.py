@@ -71,7 +71,7 @@ if __name__ == "__main__":
     loadImages()
     board = chess.Board()
     validMoves = list(board.legal_moves)
-    whitePlayer = False # Change to true if you want to play as white
+    whitePlayer = True # Change to true if you want to play as white
     blackPlayer = False # Change to true if you want to play as black
     moveMade = False
     gameOver = False
