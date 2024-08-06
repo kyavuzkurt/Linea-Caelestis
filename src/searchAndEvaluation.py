@@ -142,7 +142,7 @@ endGamePiecePositionScores = {
 
 CHECKMATE = 1000
 DRAW = 0
-DEPTH = 5  # Change the depth parameter. Max 5 is recommended.
+DEPTH = 3  # Change the depth parameter. Max 5 is recommended.
 POLYGLOT_FILE = "Titans.bin"  #Using the Titans opening book
 SYZYGY_PATH = "/syzygy"  #Using the Syzygy tablebases
 FUTILITY_MARGIN = 200
@@ -151,10 +151,10 @@ REDUCTION_LIMIT = 3
 ASPIRATION_WINDOW = 50
 FUTILITY_MARGIN = 200
 HISTORY_MAX = 10000
-MAX_TIME = 5
+MAX_TIME = 60
 
 # Killer moves and history table
-killer_moves = [[None, None] for _ in range(DEPTH)]
+killer_moves = [[None, None] for _ in range(max(DEPTH, 100))]
 history_table = [[0 for _ in range(64)] for _ in range(64)]
 
 # Transposition table constants
@@ -183,97 +183,93 @@ class TTEntry:
         self.score = score
         self.best_move = best_move
 
-def bestMove(board, validMoves, returnQueue):
+def bestMove(board, validMoves, returnQueue, time_control):
     global nextMove, nodes_searched
     nextMove = None
     nodes_searched = 0
     start_time = time.time()
-    
-    # Try to make a move from the opening book
-    try:
-        with chess.polyglot.open_reader(POLYGLOT_FILE) as reader:
-            entries = list(reader.find_all(board))
-            if entries:
-                entry = random.choice(entries)
-                nextMove = entry.move
-                print(f"DEBUG: Found book move: {nextMove}")
-    except Exception as e:
-        print(f"DEBUG: Error reading polyglot book: {e}")
 
-    # If no book move, check if we can use Syzygy tablebases
-    if nextMove is None and chess.popcount(board.occupied) <= 5:
-        try:
-            with chess.syzygy.open_tablebase(SYZYGY_PATH) as tablebase:
-                wdl = tablebase.get_wdl(board)
-                dtz = tablebase.get_dtz(board)
-                if wdl is not None and dtz is not None:
-                    best_move = None
-                    best_dtz = float('inf') if wdl > 0 else float('-inf')
-                    for move in validMoves:
-                        board.push(move)
-                        next_dtz = tablebase.get_dtz(board)
-                        if next_dtz is not None:
-                            if (wdl > 0 and next_dtz < best_dtz) or (wdl < 0 and next_dtz > best_dtz):
-                                best_move = move
-                                best_dtz = next_dtz
-                        board.pop()
-                    nextMove = best_move
-                    print(f"DEBUG: Found tablebase move: {nextMove}")
-        except Exception as e:
-            print(f"DEBUG: Error reading Syzygy tablebases: {e}")
+    print("DEBUG: Performing optimized search.")
+    best_score = -CHECKMATE
+    best_move = None
+
+    for depth in range(1, DEPTH + 1):
+        if time.time() - start_time > time_control.get('movetime', MAX_TIME):
+            break
+        
+        score = aspirationSearch(board, depth, -CHECKMATE, CHECKMATE, 1 if board.turn else -1)
+        
+        # Update move ordering based on the latest search
+        tt_entry = tt_lookup(board)
+        if tt_entry and tt_entry.best_move:
+            if score > best_score:
+                best_score = score
+                best_move = tt_entry.best_move
+            print(f"DEBUG: Depth {depth}, Best move: {tt_entry.best_move}, Score: {score}")
+
+    if best_move:
+        nextMove = best_move
+        print(f"DEBUG: Using search move: {nextMove}")
+    else:
+        # If no move found, choose the highest scored move
+        moveScores = [(move, scoreMove(board, move)) for move in validMoves]
+        moveScores.sort(key=lambda x: x[1], reverse=True)
+        nextMove = moveScores[0][0]
+        print(f"DEBUG: Using highest scored move: {nextMove}")
+
+    print(f"DEBUG: Final best move found: {nextMove}")
+    returnQueue.put(nextMove)
 
     # If no book move or tablebase move, perform the optimized search
     if nextMove is None:
         print("DEBUG: No book or tablebase move found. Performing optimized search.")
-        moveScores = [(move, scoreMove(board, move)) for move in validMoves]
-        moveScores.sort(key=lambda x: x[1], reverse=True)
-        
-        # Aspiration windows
-        window = ASPIRATION_WINDOW
-        alpha = -CHECKMATE
-        beta = CHECKMATE
-        
+        best_score = -CHECKMATE
         for depth in range(1, DEPTH + 1):
-            if time.time() - start_time > MAX_TIME:
+            if time.time() - start_time > time_control.get('movetime', MAX_TIME):
                 break
             
-            score = aspirationSearch(board, depth, alpha, beta, 1 if board.turn else -1)
-            
-            if score <= alpha or score >= beta:
-                alpha = -CHECKMATE
-                beta = CHECKMATE
-                score = aspirationSearch(board, depth, alpha, beta, 1 if board.turn else -1)
-            
-            alpha = score - window
-            beta = score + window
+            score = aspirationSearch(board, depth, -CHECKMATE, CHECKMATE, 1 if board.turn else -1)
             
             # Update move ordering based on the latest search
             tt_entry = tt_lookup(board)
             if tt_entry and tt_entry.best_move:
-                moveScores.sort(key=lambda x: x[0] == tt_entry.best_move, reverse=True)
-            else:
-                moveScores.sort(key=lambda x: scoreMove(board, x[0]), reverse=True)
-    
-    print(f"DEBUG: Best move found: {nextMove}")
+                if score > best_score:
+                    best_score = score
+                    nextMove = tt_entry.best_move
+                print(f"DEBUG: Depth {depth}, Best move: {tt_entry.best_move}, Score: {score}")
+
+    # If still no move found, choose the highest scored move
+    if nextMove is None:
+        moveScores = [(move, scoreMove(board, move)) for move in validMoves]
+        moveScores.sort(key=lambda x: x[1], reverse=True)
+        nextMove = moveScores[0][0]
+
+    print(f"DEBUG: Final best move found: {nextMove}")
     returnQueue.put(nextMove)
 
 
 def aspirationSearch(board, depth, alpha, beta, color):
     global nextMove
+    best_score = -CHECKMATE
+    best_move = None
     for move in orderMoves(board, board.legal_moves):
         board.push(move)
         score = -pvs(board, depth - 1, -beta, -alpha, -color, 0)
         board.pop()
         
-        if score > alpha:
-            alpha = score
-            if depth == DEPTH:
-                nextMove = move
+        if score > best_score:
+            best_score = score
+            best_move = move
         
+        alpha = max(alpha, score)
         if alpha >= beta:
             break
     
-    return alpha
+    if depth == DEPTH:
+        nextMove = best_move
+        print(f"DEBUG: Updated nextMove to {best_move} with score {best_score}")
+    
+    return best_score
 
 def pvs(board, depth, alpha, beta, color, ply):
     global nodes_searched
@@ -450,9 +446,10 @@ def orderMoves(board, moves):
             return 1000000
         if board.is_capture(move):
             return 100000 + staticExchangeEvaluation(board, move)
-        if move == killer_moves[board.ply()][0]:
+        ply = min(board.ply(), len(killer_moves) - 1)
+        if move == killer_moves[ply][0]:
             return 90000
-        if move == killer_moves[board.ply()][1]:
+        if move == killer_moves[ply][1]:
             return 80000
         return history_table[move.from_square][move.to_square]
     

@@ -11,3 +11,6 @@ build/
 .env
 /syzygy
 baron30.bin
+*.log
+*.bash
+*.bat
