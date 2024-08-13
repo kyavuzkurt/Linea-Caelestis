@@ -40,7 +40,7 @@ python src/uciwrapper.py
 
 Adjust the following parameters in `src/searchAndEvaluation.py` to fine-tune the engine:
 
-
+```
 CHECKMATE = 1000
 DRAW = 0
 DEPTH = 3  # Change the depth parameter. Max 5 is recommended.
