@@ -2,8 +2,9 @@ import os
 import pygame as p
 import chess
 import chess.engine
-import searchAndEvaluation
 from multiprocessing import Process, Queue
+from search import Search
+
 
 WIDTH = HEIGHT = 512
 DIMENSION = 8
@@ -21,7 +22,7 @@ def loadImages():
     return IMAGES
 
 def drawBoard(screen):
-    colors = [p.Color("white"), p.Color("brown")]
+    colors = [p.Color("brown"), p.Color("white")]
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             color = colors[((r+c)%2)]
@@ -71,8 +72,7 @@ if __name__ == "__main__":
     loadImages()
     board = chess.Board()
     validMoves = list(board.legal_moves)
-    whitePlayer = True # Change to true if you want to play as white
-    blackPlayer = False # Change to true if you want to play as black
+    isWhite = True # Change to true if you want to play as black
     moveMade = False
     gameOver = False
     animate = False
@@ -82,8 +82,10 @@ if __name__ == "__main__":
     sqSelected = ()
     playerClicks = []
 
+    search = Search(board=board, depth=10, isWhite=isWhite)  # Initialize the Search class
+
     while running:
-        humanTurn = (board.turn and whitePlayer) or (not board.turn and blackPlayer)
+        humanTurn = (board.turn and not isWhite) or (not board.turn and isWhite)
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
@@ -125,18 +127,12 @@ if __name__ == "__main__":
                     gameOver = False
 
         if not gameOver and not humanTurn:
-            if not engineThinking:
-                engineThinking = True
-                returnQueue = Queue()
-                moveFinderProcess = Process(target=searchAndEvaluation.bestMove, args=(board, validMoves, returnQueue))
-                moveFinderProcess.start()
-            if not moveFinderProcess.is_alive():
-                engineMove = returnQueue.get()
-                if engineMove is None:
-                    engineMove = searchAndEvaluation.randomMove(validMoves)
-                board.push(engineMove)
+            engineThinking = True
+            best_move = search.BestMove()  # Get the best move from the engine
+            if best_move:
+                board.push(best_move)
                 moveMade = True
-                engineThinking = False
+            engineThinking = False
 
         if moveMade:
             validMoves = list(board.legal_moves)
