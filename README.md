@@ -1,4 +1,4 @@
-Here's a short and professional GitHub README for the codebase:
+
 
 # Linea Caelestis Chess Engine
 
